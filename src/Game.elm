@@ -1,4 +1,4 @@
-module Triangle exposing (..)
+module Game exposing (..)
 
 import Browser
 import Html.Events 
@@ -17,17 +17,54 @@ main = Browser.element {init = init
                        ,subscriptions = subscriptions
                        }
 
-size = 51 -- if the size is an even integer, then the dim of the null space is 0
+size = 3 -- if the size is an even integer and p >2, then the laplacian is invertible.
 p = 3
 init: () -> (Model, Cmd Msg)
-init _ = ( Model Dict.empty [] 0 1
-          ,Random.generate RandGenerated randomSeq
+init _ = ( allOffButOne ((size//4), (size//4), 1) size p
+          ,Cmd.none
           )
 
 randomSeq: Random.Generator (List Int)
 randomSeq  =
     Random.list (size//2) (Random.int 0 (p-1))
-         
+
+allOffButOne: Position -> Int -> Int -> Model
+allOffButOne pos boardSize levelNum =
+    let
+        pos0 = List.concat <|
+                        List.map (\x ->
+                                      List.concat <| 
+                                      List.map (\y ->
+                                                    if x+y < boardSize then
+                                                        [(x, y, 0)]
+                                                    else
+                                                        []
+                                               )
+                                      (List.range 0 (boardSize-1))
+                                 )
+                       (List.range 0 (boardSize-1))
+        pos1 = List.concat <|
+                  List.map (\x ->
+                                List.concat <|
+                                List.map (\y ->
+                                              if x+y+1 < boardSize then
+                                                  [(x, y, 1)]
+                                              else
+                                                  []
+                                         )
+                                (List.range 0 (boardSize-1))
+                           )
+                      (List.range 0 (boardSize-1))
+        positions = pos0++pos1
+        lights= List.foldl (\pt dict -> if pt == pos then
+                                            Dict.insert pt 1 dict
+                                        else
+                                            Dict.insert pt 0 dict
+                           ) Dict.empty  positions
+    in
+        Model lights [] boardSize levelNum
+    
+        
 initialize: List Int -> Int -> Int -> Model
 initialize halfSeq boardSize levelNum =
     let
@@ -85,22 +122,17 @@ update msg model =
     case msg of
         Determine ->  (determine model, Cmd.none)
         Complete -> (complete model, Cmd.none)
-        Reset -> ( Model Dict.empty [] 0 1
-                 ,Random.generate RandGenerated randomSeq
-                 )
+        Reset -> (allOffButOne ((size//4), (size//4), 1) size p, Cmd.none)
         RandGenerated rseq  ->
             (initialize (Debug.log "random" <| rseq) size p, Cmd.none)
+        Clicked (x,y,c) ->
+            (rotation (x,y,c) model, Cmd.none)
+            
 
 view: Model -> Html Msg
 view model =
     Html.div []
         [Html.button
-             [Html.Events.onClick Determine]
-             [Html.text "Step"]
-        ,Html.button
-             [Html.Events.onClick Complete]
-             [Html.text "complete"]             
-        ,Html.button
              [Html.Events.onClick Reset]
              [Html.text "reset"]             
         ,Html.br [][]

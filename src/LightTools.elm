@@ -65,6 +65,15 @@ determine model =
         ,undetermined = newUndetermined
         }
 
+rotation: Position -> Model -> Model
+rotation pos model =
+    {model | determined =  Dict.map (\pt state -> if pt == pos || adjacent pt pos then
+                                                      modBy model.p (state+1)
+                                                  else
+                                                      state
+                                    ) model.determined
+    }
+        
 complete: Model -> Model
 complete model =
     if (List.length model.undetermined) > 0 then
@@ -81,7 +90,9 @@ lightView (x,y,c) brightness p size =
         py = (toFloat (y-x))*0.866*unit
     in
     if c == 0 then
-        g [transform <| "translate ("++(String.fromFloat px)++", "++(String.fromFloat py)++")"]
+        g [transform <| "translate ("++(String.fromFloat px)++", "++(String.fromFloat py)++")"
+          ,onClick (Clicked (x,y,c))
+          ]
             [Svg.path [d ("M -"++(String.fromFloat unit)
                           ++" 0 l "
                           ++(String.fromFloat (1.5*unit))
@@ -96,7 +107,9 @@ lightView (x,y,c) brightness p size =
                   ][]
             ]
     else
-        g [transform <| "translate ("++(String.fromFloat (px+(unit)))++", "++(String.fromFloat py++")")]
+        g [transform <| "translate ("++(String.fromFloat (px+(unit)))++", "++(String.fromFloat py++")")
+          ,onClick (Clicked (x,y,c))
+          ]
             [Svg.path [d ("M "++(String.fromFloat unit)
                           ++" 0 l "
                           ++(String.fromFloat (-1.5*unit))

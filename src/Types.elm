@@ -13,6 +13,7 @@ type Msg = Determine
     | Complete
     | Reset
     | RandGenerated (List Int)
+    | Clicked Position
 
     
 

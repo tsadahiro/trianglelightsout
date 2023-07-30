@@ -17,7 +17,7 @@ main = Browser.element {init = init
                        ,subscriptions = subscriptions
                        }
 
-size = 51 -- if the size is an even integer, then the dim of the null space is 0
+size = 51 -- if the size is an even integer and p >2, then the laplacian is invertible.
 p = 3
 init: () -> (Model, Cmd Msg)
 init _ = ( Model Dict.empty [] 0 1
